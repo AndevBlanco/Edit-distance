@@ -1,108 +1,66 @@
-#include <bits/stdc++.h>
-using namespace std;
-// funcion para calcular la penalidad
-void penalidad(string x, string y, int psus, int peli){
-    int i, j;
+#include<bits/stdc++.h> 
+using namespace std; 
+// Función de utilidad para encontrar el mínimo de tres números
+int contI=0;
+int contR=0;
+int conRe=0;
+int min(int x, int y, int z){ 
+   if(min(min(x, y), z)==y){
+   	contI=+1;
+   	//cout<<"Se realizo una eliminacion cuyo peso es de 1"<< endl; 
+   }
+   if(min(min(x, y), z)==x){
+   	//cout<<"se realizo una insersion cuyo peso es de 2 "<<endl;
+   }
+    if(min(min(x, y), z)==z){
+   	//cout<<"Se realizo un remplazo cuyo peso es de 3"<<endl;
+   }
+	return min(min(x, y), z); 
+} 
 
-    int m = x.length(); // longitud de cadena1
-    int n = y.length(); // longitud de cadena2
-	// tabla para guardar la subestructura de la solucion optima
-    int dp[n+m+1][n+m+1] = {0};
+int editDistDP(string str1, string str2, int m, int n){ 
+	// Crear una tabla para almacenar resultados de subproblemas
+	int dp[m+1][n+1]; 
+	// llenar d[][] de abajo hacia arriba
+	for (int i=0; i<=m; i++){ 
+		for (int j=0; j<=n; j++){ 
+			// Si la primera cadena está vacía, la única opción es
+			// inserta todos los caracteres de la segunda cadena
+			if (i==0){ 
+				dp[i][j] = j*2; // Min. operaciones = j 
+			}
+			// Si la segunda cadena está vacía, la única opción es
+			// elimina todos los caracteres de la segunda cadena
+			else if (j==0){ 
+				dp[i][j] = i; // Min. operations = i 
+			}
+			// Si los últimos caracteres son iguales, ignore el último carácter
+			// y se repite para la cadena restante
+			else if (str1[i-1] == str2[j-1]){ 
+				dp[i][j] = dp[i-1][j-1]; 
+			}
+			// Si el último caracter es diferente, considere todos
+			// posibilidades y encuentra el mínimo
+			else{
+				dp[i][j] = min(dp[i][j-1]+2 , // Insertar
+								dp[i-1][j]+1 , // Remover
+								dp[i-1][j-1]+3 ); // Reemplazar 
+			}
+		} 
+	} 
+	for(int i=0;i<=m;i++){
+		for(int j=0;j<=n;j++){
+			cout<<dp[i][j]<<"   ";
+		}
+		cout<<endl;
+	}
+	return dp[m][n]; 
+} 
+int main(){ 
+	string str1 = "agcttacc"; 
+	string str2 = "acgtaatcag"; 
 
-    // inicializacion de la tabla
-    for (i = 0; i <= (n+m); i++){
-        dp[i][0] = i * peli;
-        dp[0][i] = i * peli;
-    }
+	cout << editDistDP(str1, str2, str1.length(), str2.length()); 
 
-    // calculando la penalidad
-    for (i = 1; i <= m; i++){
-        for (j = 1; j <= n; j++){
-            if (x[i - 1] == y[j - 1]){
-                dp[i][j] = dp[i - 1][j - 1];
-            }
-            else{
-                dp[i][j] = min({dp[i - 1][j - 1] + psus , dp[i - 1][j] + peli, dp[i][j - 1] + peli    });
-            }
-        }
-    }
-
-    // reconstruyendo la solucion
-    int l = n + m; // longitud maxima posible
-
-    i = m; j = n;
-
-    int xpos = l;
-    int ypos = l;
-	// respuesta final para las cadenas
-    int xres[l+1], yres[l+1];
-
-    while ( !(i == 0 || j == 0)){
-        if (x[i - 1] == y[j - 1]){
-            xres[xpos--] = (int)x[i - 1];
-            yres[ypos--] = (int)y[j - 1];
-            i--; j--;
-        }
-        else if (dp[i - 1][j - 1] + psus == dp[i][j]){
-            xres[xpos--] = (int)x[i - 1];
-            yres[ypos--] = (int)y[j - 1];
-            i--; j--;
-        }
-        else if (dp[i - 1][j] + peli == dp[i][j]){
-            xres[xpos--] = (int)x[i - 1];
-            yres[ypos--] = (int)'_';
-            i--;
-        }
-        else if (dp[i][j - 1] + peli == dp[i][j]){
-            xres[xpos--] = (int)'_';
-            yres[ypos--] = (int)y[j - 1];
-            j--;
-        }
-    }
-    while (xpos > 0){
-        if (i > 0) xres[xpos--] = (int)x[--i];
-        else xres[xpos--] = (int)'_';
-    }
-    while (ypos > 0){
-        if (j > 0) yres[ypos--] = (int)y[--j];
-        else yres[ypos--] = (int)'_';
-    }
-
-    // Dado que asumimos que la respuesta tiene una longitud de n + m,
-    // necesitamos eliminar los espacios adicionales en el
-    // id inicial que representa el índice del que son útiles las matrices
-    // xres, xres
-    int id = 1;
-    for (i = l; i >= 1; i--){
-        if ((char)yres[i] == '_' && (char)xres[i] == '_'){
-            id = i + 1;
-            break;
-        }
-    }
-
-    // imprimiendo la respuesta final
-    cout << "Distancia de edicion = ";
-    cout << dp[m][n] << "\n";
-    cout << "Las cadenas transformadas son :\n";
-    for (i = id; i <= l; i++){
-        cout<<(char)xres[i];
-    }
-    cout << "\n";
-    for (i = id; i <= l; i++){
-        cout << (char)yres[i];
-    }
-    return;
-}
-int main(){
-    // cadenas de entrada
-    string cadena1 = "AGCTTACC";
-    string cadena2 = "ACGTAATCAG";
-
-    // inicializando el valor de las penalizaciones
-    int sustitucion = 3;
-    int eliminacion = 2;
-
-    // llamado de la funcion para calcular la penalidad
-    penalidad(cadena1, cadena2, sustitucion, eliminacion);
-    return 0;
+	return 0; 
 }
